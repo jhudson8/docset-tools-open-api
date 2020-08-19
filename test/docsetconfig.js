@@ -6,7 +6,7 @@ module.exports = {
     {
       plugin,
       options: {
-        swaggerJson: require("./petstore.json"),
+        json: require("./petstore.json"),
       },
     },
   ],

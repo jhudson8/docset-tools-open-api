@@ -11,54 +11,74 @@ function normalizePart(value: string) {
 const plugin: Plugin = {
   execute: async function ({ createTmpFolder, include, pluginOptions }) {
     pluginOptions = pluginOptions || {};
-    const swaggerJson: any =
-      typeof pluginOptions.swaggerJson === "string"
-        ? require(normalizePath(pluginOptions.swaggerJson))
-        : (pluginOptions.swaggerJson as any);
-    // console.log("1: ", swaggerJson);
+    const json: any =
+      typeof pluginOptions.json === "string"
+        ? require(normalizePath(pluginOptions.json))
+        : (pluginOptions.json as any);
 
     const rtn: DocsetEntries = {
       Entry: {},
+      index: "rapidoc/index.html",
     };
 
-    if (!swaggerJson.paths) {
+    if (!json.paths) {
       throw new Error('Invalid swager JSON; no "paths" attribute');
     }
 
     const tempDir = await createTmpFolder();
-    Object.entries(swaggerJson.paths).forEach(([path, data]) => {
+    Object.entries(json.paths).forEach(([path, data]) => {
       Object.entries(data).forEach(([method, data]) => {
         const _data = data as any;
-        const _path = path as string;
+        if (!_data.summary && !data.description && !data.operationId) {
+          // it's not valid... possibly a `parameters` attributes
+          return;
+        }
+        method = method || "GET";
+        const url = `rapidoc/index.html#${method.toLowerCase()}-${path}`;
         const tag = _data.tags && _data.tags[0];
-        const context = tag ? tag : _path.match(/^\/?[^\/]*/)[1];
-        const hashPath =
-          "swagger/index.html#/" +
-          context +
-          "/" +
-          (_data.operationId
-            ? _data.operationId
-            : _path
-                .split("/")
-                .filter((o) => o)
-                .map(normalizePart)
-                .join());
-        const name = tag ? `${tag}: ${_path}` : _path;
-        rtn.Entry[name] = hashPath;
+        const name = tag
+          ? `${tag}: [${method.toUpperCase()}] ${path}`
+          : `[${method.toUpperCase()}] ${path}`;
+
+        rtn.Service[name] = url;
       });
     });
 
-    writeFileSync(join(tempDir, "swagger.json"), JSON.stringify(swaggerJson), {
+    writeFileSync(join(tempDir, "swagger.json"), JSON.stringify(json), {
       encoding: "utf8",
     });
+    writeFileSync(
+      join(tempDir, "index.html"),
+      `
+    <!doctype html> <!-- Important: must specify -->
+    <html>
+    <head>
+      <meta charset="utf-8"> <!-- Important: rapi-doc uses utf8 charecters -->
+      <script type="module" src="./rapidoc-min.js?uid=${Date.now()}"></script>
+    </head>
+    <body>
+    </body>
+    </html>
+    <script>
+      const el = document.createElement('rapi-doc');
+      const url = window.location.href.replace(/#.*/, '').replace(/[^\/]*$/, "");
+      el.setAttribute('spec-url', url + "swagger.json?uid=${Date.now()}");
+      el.setAttribute('show-header', false);
+      document.body.appendChild(el);
+    </script>
+    `,
+      {
+        encoding: "utf8",
+      }
+    );
 
     await include({
       path: join(__dirname, "../assets"),
-      rootDirName: "swagger",
+      rootDirName: "rapidoc",
     });
     await include({
       path: tempDir,
-      rootDirName: "swagger",
+      rootDirName: "rapidoc",
     });
 
     return {
