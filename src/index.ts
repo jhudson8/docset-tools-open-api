@@ -17,7 +17,7 @@ const plugin: Plugin = {
         : (pluginOptions.json as any);
 
     const rtn: DocsetEntries = {
-      Entry: {},
+      Service: {},
       index: "rapidoc/index.html",
     };
 
