@@ -1,6 +1,7 @@
 import { Plugin, normalizePath, DocsetEntries } from "docset-tools-types";
 import { writeFileSync } from "fs-extra";
 import { join } from "path";
+import fetch from "node-fetch";
 
 function normalizePart(value: string) {
   return (
@@ -11,10 +12,19 @@ function normalizePart(value: string) {
 const plugin: Plugin = {
   execute: async function ({ createTmpFolder, include, pluginOptions }) {
     pluginOptions = pluginOptions || {};
-    const json: any =
-      typeof pluginOptions.json === "string"
-        ? require(normalizePath(pluginOptions.json))
-        : (pluginOptions.json as any);
+    let json: any = pluginOptions.json;
+    if (typeof json === "string") {
+      if (json.match(/^https?:/)) {
+        const response = await fetch(json);
+        json = await response.json();
+      }
+    } else if (typeof json === "function") {
+      json = await json();
+    }
+
+    typeof pluginOptions.json === "string"
+      ? require(normalizePath(pluginOptions.json))
+      : (pluginOptions.json as any);
 
     const rtn: DocsetEntries = {
       Service: {},
