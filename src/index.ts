@@ -65,6 +65,15 @@ const plugin: Plugin = {
       el.setAttribute('spec-url', url + "swagger.json?uid=${Date.now()}");
       el.setAttribute('show-header', false);
       document.body.appendChild(el);
+
+      const _fetch = window.fetch;
+      window.fetch = function (url, options) {
+        options = options || {};
+        if (!options.credentials) {
+          options.credentials = 'include';
+        }
+        return _fetch(url, options);
+      }
     </script>
     `,
       {

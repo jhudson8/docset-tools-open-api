@@ -1,6 +1,6 @@
 {
   "name": "docset-tools-open-api",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -23,11 +23,11 @@
   "devDependencies": {
     "@types/fs-extra": "^9.0.1",
     "@types/node": "^14.0.27",
-    "docset-tools-creator": "0.0.5",
+    "docset-tools-creator": "0.0.15",
     "typescript": "^3.9.7"
   },
   "dependencies": {
-    "docset-tools-types": "0.0.15",
+    "docset-tools-types": "0.0.20",
     "fs-extra": "^9.0.1"
   }
 }
